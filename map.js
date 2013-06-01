@@ -1,77 +1,109 @@
-
-var map,
-    native_app = (window.location.href.indexOf('/Users/') !== -1 &&
+var native_app = (window.location.href.indexOf('/Users/') !== -1 &&
                   window.location.href.indexOf('/workspace/') !== -1);
 
-function load_script(src){
-    var d=document,s=d.createElement('SCRIPT'),c=d.getElementsByTagName('script')[0];s.type='text/javascript';s.async=true;s.src=src;c.parentNode.insertBefore(s, c);
-}
+var FruitDrop = function() {
 
-function geo_success(pos) {
+};
+
+FruitDrop.prototype = {
+  initialize: function() {
+    this.loadScript('https://maps.googleapis.com/maps/api/js?v=3.12&key=AIzaSyDPq9h3wwq3U6xzBeVQPPA7h2CJamlU82s&sensor=true&callback=initialize2');
+  },
+
+  initialize2: function() {
+    var mapOptions = {
+      center: new google.maps.LatLng(40.0195625603, -105.279270661),
+      zoom: 17,
+      mapTypeId: google.maps.MapTypeId.HYBRID
+    };
+
+    this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
+
+    if (navigator.geolocation)
+      navigator.geolocation.getCurrentPosition($.proxy(this.geo_success, this), $.proxy(this.geo_fail, this), {enableHighAccuracy:true});
+    else
+      this.geo_fail();
+  },
+
+  loadScript: function(src) {
+    var d=document,s=d.createElement('SCRIPT'),c=d.getElementsByTagName('script')[0];s.type='text/javascript';s.async=true;s.src=src;c.parentNode.insertBefore(s, c);
+  },
+
+  geo_success: function(pos) {
     var lat = pos.coords.latitude,
         lng = pos.coords.longitude;
+    this._map.setCenter(new google.maps.LatLng(lat, lng));
+    this.placeMarker(this._map.getCenter(), 'You are here', '#00F');
+  },
 
-    map.setCenter(new google.maps.LatLng(lat, lng));
-    placeMarker(map, map.getCenter(), 'You are here', '#00F');
-    placeDataMarkers();
-}
+  geo_fail: function() {
+    this.placeMarker(this._map, this._map.getCenter(), 'You are here', '#00F');
+  },
 
-function geo_fail() {
-    //alert('Unable to find your location!');
-    placeMarker(map, map.getCenter(), 'You are here', '#00F');
-    placeDataMarkers();
-}
+  getData: function() {
+    var bounds = this._map.getBounds();
 
-function placeMarker(map, location, title, markerColor) {
-  var lineSymbol = {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 3,
-    strokeColor: markerColor ? markerColor : '#F00'
-  };
+    $.ajax({
+      type: 'GET',
+      url: 'http://fallingfruit.org/locations/cluster.json',
+      data: { 
+        method: 'grid',
+        grid: this._map.getZoom(),
+        nelat: bounds.getNorthEast().lat(),
+        nelng: bounds.getNorthEast().lng(),
+        swlat: bounds.getSouthWest().lat(),
+        swlng: bounds.getSouthWest().lng()
+      },
+      dataType: 'jsonp',
+      success: $.proxy(this.addMarkers, this),
+      error: $.proxy(this.error, this)
+    });
+  },
 
-  var marker = new google.maps.Marker({
-    position: location,
-    map: map,
-    title: title,
-    icon: lineSymbol
-  });
-}
+  addMarkers: function(data) {
+    var dataLength = data.length;
+    for (var i = 0; i < dataLength; i++)
+      this.placeMarker(new google.maps.LatLng(data[i].lat, data[i].lng), data[i].title);
+  },
 
-function placeDataMarkers() {
-  var dataLength = data.length > 100 ? 100 : data.length;
-  for (var i = 0; i < dataLength; i++)
-    placeMarker(map, new google.maps.LatLng(data[i].lat, data[i].lng), data[i].description);
-}
+  placeMarker: function(location, title, markerColor) {
+    var lineSymbol = {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 3,
+      strokeColor: markerColor ? markerColor : '#F00'
+    };
 
-function initialize2() {
-  var mapOptions = {
-    center: new google.maps.LatLng(40.0195625603, -105.279270661),
-    zoom: 17,
-    mapTypeId: google.maps.MapTypeId.HYBRID
-  };
+    var marker = new google.maps.Marker({
+      position: location,
+      map: this._map,
+      title: title,
+      icon: lineSymbol
+    });
 
-  map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+    var infowindow = new google.maps.InfoWindow({
+      content: '<div>' + title + '</div>'
+    });
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(geo_success, geo_fail, {enableHighAccuracy:true});
-  } else {
-    geo_fail();
+    google.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(this._map, marker);
+    });  
+  },
+
+  error: function() {
+    alert('error!');
   }
-}
-
-function initialize() {
-  load_script('https://maps.googleapis.com/maps/api/js?v=3.12&key=AIzaSyDPq9h3wwq3U6xzBeVQPPA7h2CJamlU82s&sensor=true&callback=initialize2');
-}
+};
 
 // phonegap specific deviceready event
 // can't use phonegap API's (eg. geolocation) until this fires
+var fruitDrop = new FruitDrop();
 if (native_app) {
-  document.addEventListener('deviceready', initialize, false);
+  document.addEventListener('deviceready', $.proxy(fruitDrop.initialize, fruitDrop), false);
 } else {
-  initialize();
+  fruitDrop.initialize();
 }
 
-// to better handle offline/no connection, see:
-// http://thingsico.de/blog/2011/11/using-google-maps-reliably-in-phonegap/
-
-
+function initialize2() {
+  fruitDrop.initialize2();
+}
