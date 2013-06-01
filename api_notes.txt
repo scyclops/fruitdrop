@@ -1,0 +1,26 @@
+
+To query cluster data, use the URL below and replace grid with the zoom level (appears to go from 0-12 in the web app - 0 being zoomed all the way out) and replace the nelat, nelng, swlat and swlng to represent the bounding box.
+
+    http://fallingfruit.org/locations/cluster.json?method=grid&grid=12&nelat=40.04323422479704&nelng=-105.056762812677&swlat=39.99012110888866&swlng=-105.49175274187621
+
+
+To query point data, use the URL below and replace the nelat, nelng, swlat and swlng to represent the bounding box..  The muni variable prevents municipal data from being returned.
+
+    http://fallingfruit.org/locations/markers.json?muni=1&nelat=40.014986&nelng=-105.270546&swlat=40.010378&swlng=-105.258926
+
+The data comes back in the following format:
+
+    [{"title":"Crabapple","location_id":"135286","lat":"40.0146688578","lng":"-105.26663689","picture":"/icons/smdot_t1_gray_light.png","width":17,"height":17,"marker_anchor":[0,0],"n":65},
+     {"title":"Apple","location_id":"3131","lat":"40.014824","lng":"-105.266319","picture":"/icons/smdot_t1_red.png","width":17,"height":17,"marker_anchor":[0,0],"n":65},
+     {"title":"Cherry plum","location_id":"3416","lat":"40.01065","lng":"-105.26218","picture":"/icons/smdot_t1_red.png","width":17,"height":17,"marker_anchor":[0,0],"n":65},
+     {"title":"Pear","location_id":"135273","lat":"40.014555987","lng":"-105.266397926","picture":"/icons/smdot_t1_gray_light.png","width":17,"height":17,"marker_anchor":[0,0],"n":65},
+
+     ...
+    ]
+
+
+To get extra information about a specific point, use the URL below and replace the ID number with a corresponding location_id from the data above. The extra information comes back as HTML.
+
+    http://fallingfruit.org/locations/135286/infobox
+
+
