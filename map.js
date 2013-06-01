@@ -18,7 +18,7 @@ FruitDrop.prototype = {
     };
 
     this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-    google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
+    //google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
 
     if (navigator.geolocation)
       navigator.geolocation.getCurrentPosition($.proxy(this.geo_success, this), $.proxy(this.geo_fail, this), {enableHighAccuracy:true});
@@ -85,13 +85,11 @@ FruitDrop.prototype = {
       icon: getIcon(title)
     });
 
-    var infowindow = new google.maps.InfoWindow({
-      content: '<div>' + title + '</div>'
-    });
-
     google.maps.event.addListener(marker, 'click', function() {
       console.log('caught click');
-      infowindow.open(this._map, marker);
+      new google.maps.InfoWindow({
+        content: '<div>' + title + '</div>'
+      }).open(this._map, marker);
       console.log('info window opened..');
     });  
   },
