@@ -71,5 +71,7 @@ if (native_app) {
   initialize();
 }
 
+// to better handle offline/no connection, see:
+// http://thingsico.de/blog/2011/11/using-google-maps-reliably-in-phonegap/
 
 
