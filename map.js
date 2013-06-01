@@ -46,6 +46,15 @@ FruitDrop.prototype = {
 
     $.ajax({
       type: 'GET',
+      url: 'http://fallingfruit.org/locations/markers.json',
+      data: {
+        muni: 1,
+        nelat: bounds.getNorthEast().lat(),
+        nelng: bounds.getNorthEast().lng(),
+        swlat: bounds.getSouthWest().lat(),
+        swlng: bounds.getSouthWest().lng()
+      },
+      /* -- for clusters -- 
       url: 'http://fallingfruit.org/locations/cluster.json',
       data: { 
         method: 'grid',
@@ -55,7 +64,8 @@ FruitDrop.prototype = {
         swlat: bounds.getSouthWest().lat(),
         swlng: bounds.getSouthWest().lng()
       },
-      dataType: 'jsonp',
+      */
+      dataType: 'json',
       success: $.proxy(this.addMarkers, this),
       error: $.proxy(this.error, this)
     });
