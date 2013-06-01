@@ -1,75 +1,88 @@
+var FruitDrop = function() {
 
-var map,
-    native_app = (window.location.href.indexOf('/Users/') !== -1 &&
-                  window.location.href.indexOf('/workspace/') !== -1);
+};
 
-function load_script(src){
-    var d=document,s=d.createElement('SCRIPT'),c=d.getElementsByTagName('script')[0];s.type='text/javascript';s.async=true;s.src=src;c.parentNode.insertBefore(s, c);
-}
+FruitDrop.prototype = {
+  initialize: function() {
+    if (navigator.geolocation)
+      navigator.geolocation.getCurrentPosition($.proxy(this.foundLocation, this), $.proxy(this.noLocation, this));
+    else
+      this.noLocation();
+  },
 
-function geo_success(pos) {
-    var lat = pos.coords.latitude,
-        lng = pos.coords.longitude;
+  foundLocation: function(position) {
+    this.setupMap(position.coords.latitude, position.coords.longitude);
+  },
 
-    map.setCenter(new google.maps.LatLng(lat, lng));
-    placeMarker(map, map.getCenter(), 'You are here', '#00F');
-    placeDataMarkers();
-}
+  noLocation: function() {
+    this.setupMap(40.0195625603, -105.279270661);    
+  },
 
-function geo_fail() {
-    //alert('Unable to find your location!');
-    placeMarker(map, map.getCenter(), 'You are here', '#00F');
-    placeDataMarkers();
-}
+  setupMap: function(centerLat, centerLng) {
+    var mapOptions = {
+      center: new google.maps.LatLng(centerLat, centerLng),
+      zoom: 17,
+      mapTypeId: google.maps.MapTypeId.HYBRID
+    };
 
-function placeMarker(map, location, title, markerColor) {
-  var lineSymbol = {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 3,
-    strokeColor: markerColor ? markerColor : '#F00'
-  };
+    this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    this.placeMarker(mapOptions.center, 'You are here', '#00F');
+    google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));    
+  },
 
-  var marker = new google.maps.Marker({
-    position: location,
-    map: map,
-    title: title,
-    icon: lineSymbol
-  });
-}
+  getData: function() {
+    var bounds = this._map.getBounds();
 
-function placeDataMarkers() {
-  var dataLength = data.length > 100 ? 100 : data.length;
-  for (var i = 0; i < dataLength; i++)
-    placeMarker(map, new google.maps.LatLng(data[i].lat, data[i].lng), data[i].description);
-}
+    $.ajax({
+      type: 'GET',
+      url: 'http://fallingfruit.org/locations/cluster.json',
+      data: { 
+        method: 'grid',
+        grid: this._map.getZoom(),
+        nelat: bounds.getNorthEast().lat(),
+        nelng: bounds.getNorthEast().lng(),
+        swlat: bounds.getSouthWest().lat(),
+        swlng: bounds.getSouthWest().lng()
+      },
+      dataType: 'jsonp',
+      success: $.proxy(this.addMarkers, this),
+      error: $.proxy(this.error, this)
+    });
+  },
 
-function initialize2() {
-  var mapOptions = {
-    center: new google.maps.LatLng(40.0195625603, -105.279270661),
-    zoom: 17,
-    mapTypeId: google.maps.MapTypeId.HYBRID
-  };
+  addMarkers: function(data) {
+    var dataLength = data.length;
+    for (var i = 0; i < dataLength; i++)
+      this.placeMarker(new google.maps.LatLng(data[i].lat, data[i].lng), data[i].title);
+  },
 
-  map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+  placeMarker: function(location, title, markerColor) {
+    var lineSymbol = {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 3,
+      strokeColor: markerColor ? markerColor : '#F00'
+    };
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(geo_success, geo_fail, {enableHighAccuracy:true});
-  } else {
-    geo_fail();
+    var marker = new google.maps.Marker({
+      position: location,
+      map: this._map,
+      title: title,
+      icon: lineSymbol
+    });
+
+    var infowindow = new google.maps.InfoWindow({
+      content: '<div>' + title + '</div>'
+    });
+
+    google.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(this._map, marker);
+    });  
+  },
+
+  error: function() {
+    alert('error!');
   }
-}
+};
 
-function initialize() {
-  load_script('https://maps.googleapis.com/maps/api/js?v=3.12&key=AIzaSyDPq9h3wwq3U6xzBeVQPPA7h2CJamlU82s&sensor=true&callback=initialize2');
-}
-
-// phonegap specific deviceready event
-// can't use phonegap API's (eg. geolocation) until this fires
-if (native_app) {
-  document.addEventListener('deviceready', initialize, false);
-} else {
-  initialize();
-}
-
-
-
+var fruitDrop = new FruitDrop();
+google.maps.event.addDomListener(window, 'load', $.proxy(fruitDrop.initialize, fruitDrop));
