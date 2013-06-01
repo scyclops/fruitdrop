@@ -14,7 +14,7 @@ FruitDrop.prototype = {
     var mapOptions = {
       center: new google.maps.LatLng(40.0195625603, -105.279270661),
       zoom: 17,
-      mapTypeId: google.maps.MapTypeId.HYBRID
+      mapTypeId: google.maps.MapTypeId.ROADMAP
     };
 
     this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
@@ -48,7 +48,7 @@ FruitDrop.prototype = {
       type: 'GET',
       url: 'http://fallingfruit.org/locations/markers.json',
       data: {
-        muni: 1,
+        muni: 0,
         nelat: bounds.getNorthEast().lat(),
         nelng: bounds.getNorthEast().lng(),
         swlat: bounds.getSouthWest().lat(),
@@ -90,7 +90,9 @@ FruitDrop.prototype = {
     });
 
     google.maps.event.addListener(marker, 'click', function() {
+      console.log('caught click');
       infowindow.open(this._map, marker);
+      console.log('info window opened..');
     });  
   },
 
