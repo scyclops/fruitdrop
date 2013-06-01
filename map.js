@@ -68,17 +68,11 @@ FruitDrop.prototype = {
   },
 
   placeMarker: function(location, title, markerColor) {
-    var lineSymbol = {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 3,
-      strokeColor: markerColor ? markerColor : '#F00'
-    };
-
     var marker = new google.maps.Marker({
       position: location,
       map: this._map,
       title: title,
-      icon: lineSymbol
+      icon: getIcon(title)
     });
 
     var infowindow = new google.maps.InfoWindow({
@@ -98,6 +92,7 @@ FruitDrop.prototype = {
 // phonegap specific deviceready event
 // can't use phonegap API's (eg. geolocation) until this fires
 var fruitDrop = new FruitDrop();
+
 if (native_app) {
   document.addEventListener('deviceready', $.proxy(fruitDrop.initialize, fruitDrop), false);
 } else {
