@@ -66,6 +66,8 @@ FruitDrop.prototype = {
 
     this.getNewCenter();
     this._lastLocation = this._location;
+
+    $.mobile.changePage('#map-window');
   },
 
   geo_success: function(pos) {
