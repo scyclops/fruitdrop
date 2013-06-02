@@ -2,13 +2,34 @@
 <html>
   <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" type="text/css" href="jquery.mobile-1.3.1.min.css" />
     <link rel="stylesheet" type="text/css" href="main.css" />
     <script type="text/javascript" src="phonegap.js"></script> 
-    <script type="text/javascript" src="zepto.js"></script>
+    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript" src="jquery.mobile-1.3.1.min.js"></script>
     <script type="text/javascript" src="icons.js"></script>
     <script type="text/javascript" src="map.js"></script>
   </head>
   <body>
-    <div id="map-canvas"></div>
+    <div data-role="page" id="map-window" data-theme="b">
+      <div data-role="header" data-position="fixed" data-theme="b">
+        <h1>Fruitdrop</h1>
+        <a href="#settings-window" data-transition="flip" data-role="button" class="ui-btn-right" data-icon="gear">Settings</a></div>
+      <div data-role="content" class="content">
+        <div id="map-canvas"></div>
+      </div>
+    </div>
+    <div data-role="page" id="settings-window" name="settings-window" data-theme="b" data-add-back-btn="true">
+      <div data-role="header" data-position="fixed" data-theme="b">
+        <h1>Settings</h1>
+      </div>
+      <div data-role="content" class="content">
+        <label for="location-txt">Location:</label>
+        <input type="text" id="location-text" />
+        <label for="filter-text">Filter:</label>
+        <input type="text" id="filter-text" />
+        <input type="button" id="save-btn" value="Save" disabled="disabled" />
+      </div>
+    </div>
   </body>
 </html>

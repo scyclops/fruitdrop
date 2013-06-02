@@ -22,6 +22,8 @@ FruitDrop.prototype = {
     this._infoWindow = new google.maps.InfoWindow();
     google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
 
+    this.setupSettings();
+
     if (navigator.geolocation)
       navigator.geolocation.getCurrentPosition($.proxy(this.geo_success, this), $.proxy(this.geo_fail, this), {enableHighAccuracy:true});
     else
@@ -30,6 +32,37 @@ FruitDrop.prototype = {
 
   loadScript: function(src) {
     var d=document,s=d.createElement('SCRIPT'),c=d.getElementsByTagName('script')[0];s.type='text/javascript';s.async=true;s.src=src;c.parentNode.insertBefore(s, c);
+  },
+
+  setupSettings: function() {
+    this._locationInput = $('#location-text');
+    this._filterInput = $('#filter-text');
+    this._saveButton = $('#save-btn');
+
+    this._locationInput.on('change', $.proxy(this.enableSaveButton, this));
+    this._filterInput.on('change', $.proxy(this.enableSaveButton, this));
+    this._saveButton.on('click', $.proxy(this.saveClick, this));
+  },
+
+  enableSaveButton: function(e) {
+    this.toggleSaveButton(false);
+  },
+
+  toggleSaveButton: function(disabled) {
+    if (disabled)
+      this._saveButton.button('disable');
+    else
+      this._saveButton.button('enable');
+
+    this._saveButton.button('refresh');
+  },
+
+  saveClick: function(e) {
+    e.preventDefault();
+    this._location = this._locationInput.val();
+    this._filter = this._filterInput.val();
+    this.toggleSaveButton(true);
+    this.getData();
   },
 
   geo_success: function(pos) {
@@ -114,7 +147,7 @@ FruitDrop.prototype = {
   },
 
   error: function() {
-    alert('error');
+    console.log("error");
   }
 };
 

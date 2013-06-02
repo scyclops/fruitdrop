@@ -8,8 +8,16 @@ body {
 	padding: 0
 }
 
-#map-canvas {
+#map-window {
 	height: 100%;
+}
+
+.content {
+	height: 100%;
+}
+
+#map-canvas {
+	height: 90%;
 	width: 100%; 
 }
 
