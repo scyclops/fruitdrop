@@ -22,7 +22,7 @@ FruitDrop.prototype = {
     this._infoWindow = new google.maps.InfoWindow();
     this._geocoder = new google.maps.Geocoder();
 
-    google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
+    google.maps.event.addListener(this._map, 'idle', $.proxy(this.getData, this));
 
     this.setupSettings();
 
@@ -92,6 +92,7 @@ FruitDrop.prototype = {
   },
 
   getData: function() {
+  console.log('get data');
     var bounds = this._map.getBounds();
 
     $.ajax({
