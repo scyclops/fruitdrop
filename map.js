@@ -19,6 +19,7 @@ FruitDrop.prototype = {
 
     this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
     google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
+    this._infoWindow = new google.maps.InfoWindow();
 
     if (navigator.geolocation)
       navigator.geolocation.getCurrentPosition($.proxy(this.geo_success, this), $.proxy(this.geo_fail, this), {enableHighAccuracy:true});
@@ -34,11 +35,11 @@ FruitDrop.prototype = {
     var lat = pos.coords.latitude,
         lng = pos.coords.longitude;
     this._map.setCenter(new google.maps.LatLng(lat, lng));
-    this.placeMarker(this._map.getCenter(), 'You are here', '#00F');
+    this.placeMarker(this._map.getCenter(), 'You are here');
   },
 
   geo_fail: function() {
-    this.placeMarker(this._map, this._map.getCenter(), 'You are here', '#00F');
+    this.placeMarker(this._map.getCenter(), 'You are here');
   },
 
   getData: function() {
@@ -91,7 +92,7 @@ FruitDrop.prototype = {
     this._markers = [];
   },
 
-  placeMarker: function(location, title, markerColor) {
+  placeMarker: function(location, title) {
     var marker = new google.maps.Marker({
       position: location,
       map: this._map,
@@ -99,10 +100,10 @@ FruitDrop.prototype = {
       icon: getIcon(title)
     });
 
+    var self = this;
     google.maps.event.addListener(marker, 'click', function() {
-      new google.maps.InfoWindow({
-        content: '<div>' + title + '</div>'
-      }).open(this._map, marker);
+      self._infoWindow.setContent(this.getTitle());
+      self._infoWindow.open(self._map, marker);
     });
 
     return marker;
