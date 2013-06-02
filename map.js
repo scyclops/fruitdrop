@@ -64,11 +64,7 @@ FruitDrop.prototype = {
     this._filter = this._filterInput.val();
     this.toggleSaveButton(true);
 
-    if ((this._lastLocation) && (this._lastLocation === this._location))
-      this.getData();
-    else
-      this.getNewCenter();
-
+    this.getNewCenter();
     this._lastLocation = this._location;
   },
 
@@ -87,7 +83,8 @@ FruitDrop.prototype = {
     if (this._homeMarker)
       this._homeMarker.setMap(null);
 
-    this._homeMarker = this.placeMarker(this._map.getCenter(), 'You are Here');
+    this._lastCenter = this._map.getCenter();
+    this._homeMarker = this.placeMarker(this._lastCenter, 'You are Here');
   },
 
   getData: function() {
@@ -164,14 +161,24 @@ FruitDrop.prototype = {
   },
 
   getNewCenter: function() {
-    this._geocoder.geocode( { 'address': this._location }, $.proxy(this.changeLocation, this));
+    if (!this._location) {
+      this.changeCenter(this._lastCenter);
+      return;
+    }
+
+    this._geocoder.geocode({ 'address': this._location }, $.proxy(this.geocodeSuccess, this));
   },
 
-  changeLocation: function(results, status) {
-    if (status == google.maps.GeocoderStatus.OK) {
-      this._map.panTo(results[0].geometry.location);
-      this.setHomeMarker();
-    }
+  geocodeSuccess: function(results, status) {
+    if (status == google.maps.GeocoderStatus.OK)
+      this.changeCenter(results[0].geometry.location);
+    else
+      this.changeCenter(this._lastCenter);
+  },
+
+  changeCenter: function(latlng) {
+    this._map.panTo(latlng);
+    this.setHomeMarker();
   },
 
   error: function() {
