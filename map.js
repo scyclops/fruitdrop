@@ -1,5 +1,6 @@
 var native_app = (window.location.href.indexOf('/Users/') !== -1 &&
-                  window.location.href.indexOf('/workspace/') !== -1);
+                  window.location.href.indexOf('/workspace/') !== -1),
+    api_url = (native_app ? 'http://fallingfruit.org' : 'http://localhost:8080');
 
 var FruitDrop = function() {
 
@@ -47,7 +48,7 @@ FruitDrop.prototype = {
 
     $.ajax({
       type: 'GET',
-      url: 'http://fallingfruit.org/locations/markers.json',
+      url: api_url + '/locations/markers.json',
       data: {
         muni: 0,
         nelat: bounds.getNorthEast().lat(),
@@ -56,7 +57,7 @@ FruitDrop.prototype = {
         swlng: bounds.getSouthWest().lng()
       },
       /* -- for clusters -- 
-      url: 'http://fallingfruit.org/locations/cluster.json',
+      url: api_url + '/locations/cluster.json',
       data: { 
         method: 'grid',
         grid: this._map.getZoom(),
@@ -113,7 +114,7 @@ FruitDrop.prototype = {
   },
 
   error: function() {
-    alert('error!');
+    alert('error');
   }
 };
 
