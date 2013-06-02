@@ -19,16 +19,12 @@ FruitDrop.prototype = {
 
     this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
     this._infoWindow = new google.maps.InfoWindow();
-    this.addBoundsChangedListener();
+    google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
 
     if (navigator.geolocation)
       navigator.geolocation.getCurrentPosition($.proxy(this.geo_success, this), $.proxy(this.geo_fail, this), {enableHighAccuracy:true});
     else
       this.geo_fail();
-  },
-
-  addBoundsChangedListener: function() {
-    this._boundsChangedListener = google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
   },
 
   loadScript: function(src) {
@@ -90,8 +86,10 @@ FruitDrop.prototype = {
     }
 
     var markersLength = this._markers.length;
-    for (var i = 0; i < markersLength; i++)
-      this._markers[i].setMap(null);
+    for (var i = 0; i < markersLength; i++) {
+      if (this._markers[i] !== this._infoWindowMarker)
+        this._markers[i].setMap(null);
+    }
 
     this._markers = [];
   },
@@ -106,10 +104,9 @@ FruitDrop.prototype = {
 
     var self = this;
     google.maps.event.addListener(marker, 'click', function() {
-      google.maps.event.removeListener(self._boundsChangedListener);
       self._infoWindow.setContent(this.getTitle());
-      self._infoWindow.open(self._map, marker);
-      self.addBoundsChangedListener();
+      self._infoWindow.open(self._map, this);
+      self._infoWindowMarker = this;
     });
 
     return marker;
