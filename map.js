@@ -72,9 +72,23 @@ FruitDrop.prototype = {
   },
 
   addMarkers: function(data) {
+    this.removeMarkers();
     var dataLength = data.length;
     for (var i = 0; i < dataLength; i++)
-      this.placeMarker(new google.maps.LatLng(data[i].lat, data[i].lng), data[i].title);
+      this._markers.push(this.placeMarker(new google.maps.LatLng(data[i].lat, data[i].lng), data[i].title));
+  },
+
+  removeMarkers: function() {
+    if (!this._markers) {
+      this._markers = [];
+      return;
+    }
+
+    var markersLength = this._markers.length;
+    for (var i = 0; i < markersLength; i++)
+      this._markers[i].setMap(null);
+
+    this._markers = [];
   },
 
   placeMarker: function(location, title, markerColor) {
@@ -86,12 +100,12 @@ FruitDrop.prototype = {
     });
 
     google.maps.event.addListener(marker, 'click', function() {
-      console.log('caught click');
       new google.maps.InfoWindow({
         content: '<div>' + title + '</div>'
       }).open(this._map, marker);
-      console.log('info window opened..');
-    });  
+    });
+
+    return marker;
   },
 
   error: function() {
