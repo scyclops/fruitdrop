@@ -20,6 +20,8 @@ FruitDrop.prototype = {
 
     this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
     this._infoWindow = new google.maps.InfoWindow();
+    this._geocoder = new google.maps.Geocoder();
+
     google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
 
     this.setupSettings();
@@ -39,8 +41,8 @@ FruitDrop.prototype = {
     this._filterInput = $('#filter-text');
     this._saveButton = $('#save-btn');
 
-    this._locationInput.on('change', $.proxy(this.enableSaveButton, this));
-    this._filterInput.on('change', $.proxy(this.enableSaveButton, this));
+    this._locationInput.on('keypress', $.proxy(this.enableSaveButton, this));
+    this._filterInput.on('keypress', $.proxy(this.enableSaveButton, this));
     this._saveButton.on('click', $.proxy(this.saveClick, this));
   },
 
@@ -62,18 +64,31 @@ FruitDrop.prototype = {
     this._location = this._locationInput.val();
     this._filter = this._filterInput.val();
     this.toggleSaveButton(true);
-    this.getData();
+
+    if ((this._lastLocation) && (this._lastLocation === this._location))
+      this.getData();
+    else
+      this.getNewCenter();
+
+    this._lastLocation = this._location;
   },
 
   geo_success: function(pos) {
     var lat = pos.coords.latitude,
         lng = pos.coords.longitude;
     this._map.setCenter(new google.maps.LatLng(lat, lng));
-    this.placeMarker(this._map.getCenter(), 'You are here');
+    this.setHomeMarker();
   },
 
   geo_fail: function() {
-    this.placeMarker(this._map.getCenter(), 'You are here');
+    this.setHomeMarker();
+  },
+
+  setHomeMarker: function() {
+    if (this._homeMarker)
+      this._homeMarker.setMap(null);
+
+    this._homeMarker = this.placeMarker(this._map.getCenter(), 'You are Here');
   },
 
   getData: function() {
@@ -129,6 +144,9 @@ FruitDrop.prototype = {
   },
 
   placeMarker: function(location, title) {
+    if ((this._filter) && (title.search(new RegExp(this._filter,"i")) < 0) && (title !== 'You are Here'))
+      return;
+
     var marker = new google.maps.Marker({
       position: location,
       map: this._map,
@@ -144,6 +162,17 @@ FruitDrop.prototype = {
     });
 
     return marker;
+  },
+
+  getNewCenter: function() {
+    this._geocoder.geocode( { 'address': this._location }, $.proxy(this.changeLocation, this));
+  },
+
+  changeLocation: function(results, status) {
+    if (status == google.maps.GeocoderStatus.OK) {
+      this._map.panTo(results[0].geometry.location);
+      this.setHomeMarker();
+    }
   },
 
   error: function() {
