@@ -2,6 +2,9 @@ var native_app = (window.location.href.indexOf('/Users/') !== -1 &&
                   window.location.href.indexOf('/workspace/') !== -1),
     api_url = (native_app ? 'http://fallingfruit.org' : 'http://localhost:8080');
 
+alert(window.location.href);
+alert(api_url);
+
 var FruitDrop = function() {
 
 };
@@ -92,7 +95,6 @@ FruitDrop.prototype = {
   },
 
   getData: function() {
-  console.log('get data');
     var bounds = this._map.getBounds();
 
     $.ajax({
