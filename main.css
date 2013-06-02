@@ -8,8 +8,28 @@ body {
 	padding: 0
 }
 
+#map-window {
+	height: 100%;
+	padding: 0;
+	width: 100%;
+}
+
+#map-window .header {
+	left: 0;
+	position: absolute;
+	top: 0;
+	width: 100%;
+}
+
+#map-window .content {
+	height: 100%;
+	padding: 0;
+	width: 100%;
+}
+
 #map-canvas {
 	height: 100%;
+	padding: 0;
 	width: 100%; 
 }
 

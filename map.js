@@ -7,7 +7,6 @@ $(document).on('click', 'a', function(){
     }
 });
 
-
 var FruitDrop = function() {
 
 };
@@ -26,7 +25,11 @@ FruitDrop.prototype = {
 
     this._map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
     this._infoWindow = new google.maps.InfoWindow();
-    google.maps.event.addListener(this._map, 'bounds_changed', $.proxy(this.getData, this));
+    this._geocoder = new google.maps.Geocoder();
+
+    google.maps.event.addListener(this._map, 'idle', $.proxy(this.getData, this));
+
+    this.setupSettings();
 
     if (navigator.geolocation)
       navigator.geolocation.getCurrentPosition($.proxy(this.geo_success, this), $.proxy(this.geo_fail, this), {enableHighAccuracy:true});
@@ -38,15 +41,58 @@ FruitDrop.prototype = {
     var d=document,s=d.createElement('SCRIPT'),c=d.getElementsByTagName('script')[0];s.type='text/javascript';s.async=true;s.src=src;c.parentNode.insertBefore(s, c);
   },
 
+  setupSettings: function() {
+    this._locationInput = $('#location-text');
+    this._filterInput = $('#filter-text');
+    this._saveButton = $('#save-btn');
+
+    this._locationInput.on('keypress', $.proxy(this.enableSaveButton, this));
+    this._filterInput.on('keypress', $.proxy(this.enableSaveButton, this));
+    this._saveButton.on('click', $.proxy(this.saveClick, this));
+  },
+
+  enableSaveButton: function(e) {
+    this.toggleSaveButton(false);
+  },
+
+  toggleSaveButton: function(disabled) {
+    if (disabled)
+      this._saveButton.button('disable');
+    else
+      this._saveButton.button('enable');
+
+    this._saveButton.button('refresh');
+  },
+
+  saveClick: function(e) {
+    e.preventDefault();
+    this._location = this._locationInput.val();
+    this._filter = this._filterInput.val();
+    this.toggleSaveButton(true);
+
+    this.getNewCenter();
+    this._lastLocation = this._location;
+
+    $.mobile.changePage('#map-window');
+  },
+
   geo_success: function(pos) {
     var lat = pos.coords.latitude,
         lng = pos.coords.longitude;
     this._map.setCenter(new google.maps.LatLng(lat, lng));
-    this.placeMarker(this._map.getCenter(), 'You are here');
+    this.setHomeMarker();
   },
 
   geo_fail: function() {
-    this.placeMarker(this._map.getCenter(), 'You are here');
+    this.setHomeMarker();
+  },
+
+  setHomeMarker: function() {
+    if (this._homeMarker)
+      this._homeMarker.setMap(null);
+
+    this._lastCenter = this._map.getCenter();
+    this._homeMarker = this.placeMarker(this._lastCenter, 'You are Here');
   },
 
   getData: function() {
@@ -99,6 +145,9 @@ FruitDrop.prototype = {
   },
 
   placeMarker: function(location, title, location_id) {
+    if ((this._filter) && (title.search(new RegExp(this._filter,"i")) < 0) && (title !== 'You are Here'))
+      return;
+
     var marker = new google.maps.Marker({
       position: location,
       map: this._map,
@@ -145,8 +194,29 @@ FruitDrop.prototype = {
     return marker;
   },
 
+  getNewCenter: function() {
+    if (!this._location) {
+      this.changeCenter(this._lastCenter);
+      return;
+    }
+
+    this._geocoder.geocode({ 'address': this._location }, $.proxy(this.geocodeSuccess, this));
+  },
+
+  geocodeSuccess: function(results, status) {
+    if (status == google.maps.GeocoderStatus.OK)
+      this.changeCenter(results[0].geometry.location);
+    else
+      this.changeCenter(this._lastCenter);
+  },
+
+  changeCenter: function(latlng) {
+    this._map.panTo(latlng);
+    this.setHomeMarker();
+  },
+
   error: function() {
-    alert('error');
+    console.log("error");
   }
 };
 
