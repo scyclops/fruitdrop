@@ -10,14 +10,26 @@ body {
 
 #map-window {
 	height: 100%;
+	padding: 0;
+	width: 100%;
 }
 
-.content {
-	height: 98%;
+#map-window .header {
+	left: 0;
+	position: absolute;
+	top: 0;
+	width: 100%;
+}
+
+#map-window .content {
+	height: 100%;
+	padding: 0;
+	width: 100%;
 }
 
 #map-canvas {
-	height: 90%;
+	height: 100%;
+	padding: 0;
 	width: 100%; 
 }
 
