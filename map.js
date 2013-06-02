@@ -1,8 +1,7 @@
 
 $(document).on('click', 'a', function(){
     if (this.target === '_blank') {
-        console.log('opening window..');
-        window.open(this.href);
+        window.open(this.href, '_blank', 'location=yes');
         return false;
     }
 });
