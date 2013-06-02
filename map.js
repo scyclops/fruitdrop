@@ -1,6 +1,12 @@
-var native_app = (window.location.href.indexOf('/Users/') !== -1 &&
-                  window.location.href.indexOf('/workspace/') !== -1),
-    api_url = (native_app ? 'http://fallingfruit.org' : 'http://localhost:8080');
+
+$(document).on('click', 'a', function(){
+    if (this.target === '_blank') {
+        console.log('opening window..');
+        window.open(this.href);
+        return false;
+    }
+});
+
 
 var FruitDrop = function() {
 
@@ -44,40 +50,37 @@ FruitDrop.prototype = {
   },
 
   getData: function() {
-    var bounds = this._map.getBounds();
+    var bounds = this._map.getBounds(),
+        self = this;
 
-    $.ajax({
-      type: 'GET',
-      url: api_url + '/locations/markers.json',
-      data: {
-        muni: 0,
-        nelat: bounds.getNorthEast().lat(),
-        nelng: bounds.getNorthEast().lng(),
-        swlat: bounds.getSouthWest().lat(),
-        swlng: bounds.getSouthWest().lng()
-      },
-      /* -- for clusters -- 
-      url: api_url + '/locations/cluster.json',
-      data: { 
-        method: 'grid',
-        grid: this._map.getZoom(),
-        nelat: bounds.getNorthEast().lat(),
-        nelng: bounds.getNorthEast().lng(),
-        swlat: bounds.getSouthWest().lat(),
-        swlng: bounds.getSouthWest().lng()
-      },
-      */
-      dataType: 'json',
-      success: $.proxy(this.addMarkers, this),
-      error: $.proxy(this.error, this)
-    });
+    get_markers(
+        bounds.getNorthEast().lat(),
+        bounds.getNorthEast().lng(),
+        bounds.getSouthWest().lat(),
+        bounds.getSouthWest().lng()
+    ).then(
+      $.proxy(this.addMarkers, this),
+      $.proxy(this.error, this)
+    );
+
+    /* -- for clusters -- 
+      get_clusters(
+        bounds.getNorthEast().lat(),
+        bounds.getNorthEast().lng(),
+        bounds.getSouthWest().lat(),
+        bounds.getSouthWest().lng(),
+        this._map.getZoom(),
+      )
+    */
   },
 
   addMarkers: function(data) {
     this.removeMarkers();
     var dataLength = data.length;
     for (var i = 0; i < dataLength; i++)
-      this._markers.push(this.placeMarker(new google.maps.LatLng(data[i].lat, data[i].lng), data[i].title));
+      this._markers.push(this.placeMarker(new google.maps.LatLng(data[i].lat, data[i].lng),
+                         data[i].title,
+                         data[i].location_id));
   },
 
   removeMarkers: function() {
@@ -95,7 +98,7 @@ FruitDrop.prototype = {
     this._markers = [];
   },
 
-  placeMarker: function(location, title) {
+  placeMarker: function(location, title, location_id) {
     var marker = new google.maps.Marker({
       position: location,
       map: this._map,
@@ -105,9 +108,38 @@ FruitDrop.prototype = {
 
     var self = this;
     google.maps.event.addListener(marker, 'click', function() {
-      self._infoWindow.setContent(this.getTitle());
-      self._infoWindow.open(self._map, this);
-      self._infoWindowMarker = this;
+      var that = this;
+
+      get_info(location_id)
+        .then(function(data){
+            var html = ('<strong>' + title + '</strong><br /><em>by ' +
+                        data.author + '</em><br /><br />' + data.description),
+                t;
+
+            for (var i = 0; i < data.types.length; ++i) {
+                t = data.types[i];
+
+                if (!t.wiki_url && !t.usda_url) continue;
+
+                html += '<br /><br />' + title + ' (';
+                if (t.wiki_url) {
+                    html += '<a href="'+ t.wiki_url +'" target="_blank">wiki</a>';
+                }
+                if (t.usda_url) {
+                    if (t.wiki_url) html += ' | ';
+                    html += '<a href="'+ t.usda_url +'" target="_blank">usda</a>';
+                }
+                html += ')';
+            }
+
+            self._infoWindow.setContent(html);
+            self._infoWindow.open(self._map, that);
+            self._infoWindowMarker = that;
+
+        }, function(){
+          console.log("Unable to fetch location data.");
+        });
+
     });
 
     return marker;
